@@ -39,46 +39,10 @@ window.onload = function() {
 	bluePlayer.addEventListener("load", gameLoop);
 	
 	maze1 = new Maze(ctx, generateMaze(ROWS, COLS), 5, 5);
-	maze2 = new Maze(ctx, generateMaze(ROWS, COLS), 10+42*ROWS, 5);
+	maze2 = new Maze(ctx, generateMaze(ROWS, COLS), 10+floorTile.width*ROWS, 5);
 	
 	maze1.render();
 	maze2.render();
-}
-
-//Maze object to describe a new maze
-function Maze(context, array, startX, startY) {
-	this.context = context;
-	this.maze = array;
-	this.xPos = startX;
-	this.yPos = startY;
-}
-
-Maze.prototype.render = function() {
-	for(var i = 0; i<ROWS; i++) {
-		for(var j =0; j<COLS; j++) {
-			if(this.maze[i][j] === 0)
-				this.context.drawImage(floorTile, this.xPos+floorTile.width*i, this.yPos+floorTile.height*j);
-			else
-				this.context.drawImage(wallTile, this.xPos+wallTile.width*i, this.yPos+wallTile.height*j);
-		}
-	}
-}
-
-//return the maze array, but with Sprite objects
-Maze.prototype.getSpriteList = function() {
-	//my array of tiles as Sprite objects
-	var tileList = create2DArray(ROWS, COLS);
-	for(var i = 0; i<this.maze.length; i++) {
-		for(var j =0; j<this.maze[i].length; j++) {
-			if(this.maze[i][j] === 0)
-				tileList[i][j] = new Sprite(this.context, floorTile, this.xPos+floorTile.width*i,
-					this.yPos+floorTile.height*j, floorTile.width, floorTile.height);
-			else
-				tileList[i][j] = new Sprite(this.context, wallTile, this.xPos+wallTile.width*i,
-					this.yPos+wallTile.height*j, wallTile.width, wallTile.height);
-		}
-	}
-	return tileList;
 }
 
 function Sprite(context, img, x, y, width, height) {
@@ -108,14 +72,47 @@ Sprite.prototype.render = function() {
 }
 
 Sprite.prototype.move = function() {
-
-	if(wallCollision(this, maze1) == false) {
-		this.xPos += this.xSpeed;
-		this.yPos += this.ySpeed;
+	this.xPos += this.xSpeed;
+	this.yPos += this.ySpeed;
+	var collide = wallCollision(this, maze1);
+	var bounds = borderCollision(this, maze1);
+	if(collide != null) {
+		var extra = overlapAmount(this, collide, this.direction, 2);
+		//char facing down
+		if(this.direction === 0) {
+			this.yPos -= extra;
+		}
+		//char facing right
+		else if(this.direction === 1) {
+			this.xPos -= extra;
+		}
+		//char facing up
+		else if(this.direction === 2) {
+			this.yPos += extra;
+		}
+		//char facing left
+		else {
+			this.xPos += extra;
+		}
+	}
+	if(bounds != 0) {
+		if(this.direction ==- 0) {
+			this.yPos -= bounds;
+		}
+		else if(this.direction === 1) {
+			this.xPos -= bounds;
+		}
+		else if(this.direction === 2) {
+			this.yPos += bounds;
+		}
+		else {
+			this.xPos += bounds;
+		}
 	}
 
-	if(this.xSpeed + this.ySpeed != 0)
+	if(this.xSpeed + this.ySpeed != 0) {
 		this.frameIndex = (this.frameIndex+1)%3;
+	}
 }
 
 function gameLoop() {
@@ -127,37 +124,37 @@ function gameLoop() {
 
 function update() {
 	gctx.clearRect(0, 0, gameplay.width, gameplay.height);
-	handleInput(blue);
+	handleInput(blue, 3);
 	blue.move();
 }
 
 
-function handleInput(player) {
+function handleInput(player, speed) {
 	document.onkeydown = function(e) {
 		e = e || window.event;
 		//direction value - 0 is down, 1 is right, 2 is up, and 3 is left
 		//up arrow
 		if(e.keyCode === 38) {
 			player.direction = 2;
-			player.ySpeed = -2;
+			player.ySpeed = -1*speed;
 			player.xSpeed = 0;
 		}
 		//down arrow
 		else if(e.keyCode === 40) {
 			player.direction = 0;
-			player.ySpeed = 2;
+			player.ySpeed = speed;
 			player.xSpeed = 0;
 		}
 		//left arrow
 		else if(e.keyCode === 37) {
 			player.direction = 3;
-			player.xSpeed = -2;
+			player.xSpeed = -1*speed;
 			player.ySpeed = 0;
 		}
 		//right arrow
 		else if(e.keyCode === 39) {
 			player.direction = 1;
-			player.xSpeed = 2;
+			player.xSpeed = speed;
 			player.ySpeed = 0;
 		}
 	}
@@ -174,8 +171,8 @@ function handleInput(player) {
 	}
 }
 
-// accepts a Sprite and a Maze object as parameters
 
+// accepts a Sprite and a Maze object as parameters
 function wallCollision(player, mazeObj) {
 	
 	var tileList = mazeObj.getSpriteList(); 
@@ -183,70 +180,73 @@ function wallCollision(player, mazeObj) {
 	for(var i = 0; i< mazeObj.maze.length; i++) {
 		for(var j = 0; j<mazeObj.maze.length; j++) {
 			//if the tile we are currently looking at is a wall
-			if(mazeObj.maze[i][j] === 1 && overlap(player, tileList[i][j])) {
-				//char facing down
-				if(player.direction === 0) {
-					player.yPos -= overlapAmount(player, tileList[i][j], 0);
-				}
-				//char facing right
-				else if(player.direction === 1) {
-					player.xPos -= overlapAmount(player, tileList[i][j], 1);
-				}
-				//char facing up
-				else if(player.direction === 2) {
-					player.yPos += overlapAmount(player, tileList[i][j], 2);
-				}
-				//char facing left
-				else {
-					player.xPos += overlapAmount(player, tileList[i][j], 3);
-				}
-				return true;
+			if(mazeObj.maze[i][j] === 1 && overlap(player, tileList[i][j], 2)) {
+				return tileList[i][j];
 			}
 		}
 	}
-	
-	if(player.xPos < 5 || player.yPos < 5)
-		return true;
-	else return false;
+	return null;
 }
 
+function borderCollision(player, mazeObj) {
+	//colliding with left border
+	if(player.xPos < mazeObj.xPos) {
+		return mazeObj.xPos - player.xPos;
+	}
+	//colliding with right border
+	else if(player.xPos + player.width > mazeObj.xPos + floorTile.width*COLS) {
+		return (player.xPos + player.width) - (mazeObj.xPos + floorTile.width*COLS);
+	}
+	//colliding with top border
+	else if(player.yPos < mazeObj.yPos) {
+		return mazeObj.yPos - player.yPos;
+	}
+	//colliding with bottom border
+	else if(player.yPos + player.height > mazeObj.xPos + floorTile.height*ROWS) {
+		return (player.yPos + player.height) - (mazeObj.xPos + floorTile.height*ROWS);
+	}
+
+	else {
+		return 0;
+	}
+}
 
 //takes two sprites as parameters
-function overlap(sprite1, sprite2) {
+function overlap(sprite1, sprite2, dev) {
 	var verticalOverlap = false;
 	var horizontalOverlap = false;
 	//if intersects & sprite1 to the right of sprite2
-	if(sprite1.xPos > sprite2.xPos && sprite1.xPos < (sprite2.xPos + sprite2.width))
+	if(sprite1.xPos - sprite2.xPos > dev && (sprite2.xPos + sprite2.width) - sprite1.xPos > dev)
 		horizontalOverlap = true;
 	//if intersects & sprite1 to the left of sprite2
-	else if((sprite1.xPos + sprite1.width) > sprite2.xPos && (sprite1.xPos + sprite1.width) < (sprite2.xPos + sprite2.width))
+	else if((sprite1.xPos + sprite1.width) - sprite2.xPos > dev && (sprite2.xPos + sprite2.width) - (sprite1.xPos + sprite1.width) > dev)
 		horizontalOverlap = true;
 	//if intersects & sprite1 above sprite2
-	if(sprite1.yPos + sprite1.height > sprite2.yPos && sprite1.yPos + sprite1.height < sprite2.yPos + sprite2.height)
+	if(sprite1.yPos + sprite1.height - sprite2.yPos > dev && (sprite2.yPos + sprite2.height) - (sprite1.yPos + sprite1.height) > dev)
 		verticalOverlap = true;
 	//if intersects & sprite2 above sprite1
-	else if(sprite1.yPos > sprite2.yPos && sprite1.yPos < (sprite2.yPos + sprite2.height))
+	else if(sprite1.yPos - sprite2.yPos > dev && (sprite2.yPos + sprite2.height) - sprite1.yPos > dev)
 		verticalOverlap = true;
 	
 	return (horizontalOverlap && verticalOverlap);
 }
 
-function overlapAmount(sprite1, sprite2, direction) {
+function overlapAmount(sprite1, sprite2, direction, dev) {
 	//if char facing down
 	if(direction === 0) {
-		return sprite1.yPos + sprite1.height - sprite2.yPos;
+		return sprite1.yPos + sprite1.height - sprite2.yPos - dev;
 	}
 	//char facing right
 	else if(direction === 1) {
-		return sprite1.xPos + sprite1.width - sprite2.xPos;
+		return sprite1.xPos + sprite1.width - sprite2.xPos - dev;
 	}
 	//char facing up
 	else if(direction === 2) {
-		return sprite2.yPos + sprite2.height - sprite1.yPos;
+		return sprite2.yPos + sprite2.height - sprite1.yPos - dev;
 	}
 	//char facing left
 	else {
-		return sprite2.xPos + sprite2.width - sprite1.xPos;
+		return sprite2.xPos + sprite2.width - sprite1.xPos - dev;
 	}
 }
 
@@ -264,8 +264,53 @@ Vector.prototype.getY = function() {
 }
 
 
+//*************************************************************
+// ALL THINGS RELATED TO GENERATING MAZES
+//
+// Maze object, creating 2d array, generating the maze array
+//*************************************************************
 
 
+//Maze object to describe a new maze
+function Maze(context, array, startX, startY) {
+	this.context = context;
+	this.maze = array;
+	this.xPos = startX;
+	this.yPos = startY;
+}
+
+//Method to draw the entire maze
+Maze.prototype.render = function() {
+	for(var i = 0; i<ROWS; i++) {
+		for(var j =0; j<COLS; j++) {
+			if(this.maze[i][j] === 0)
+				this.context.drawImage(floorTile, this.xPos+floorTile.width*i, this.yPos+floorTile.height*j);
+			else
+				this.context.drawImage(wallTile, this.xPos+wallTile.width*i, this.yPos+wallTile.height*j);
+		}
+	}
+}
+
+//return the maze array, but with Sprite objects representing each tile
+Maze.prototype.getSpriteList = function() {
+	//my array of tiles as Sprite objects
+	var tileList = create2DArray(ROWS, COLS);
+	for(var i = 0; i<this.maze.length; i++) {
+		for(var j =0; j<this.maze[i].length; j++) {
+			if(this.maze[i][j] === 0)
+				tileList[i][j] = new Sprite(this.context, floorTile, this.xPos+floorTile.width*i,
+					this.yPos+floorTile.height*j, floorTile.width, floorTile.height);
+			else
+				tileList[i][j] = new Sprite(this.context, wallTile, this.xPos+wallTile.width*i,
+					this.yPos+wallTile.height*j, wallTile.width, wallTile.height);
+		}
+	}
+	return tileList;
+}
+
+//Creates an integer array that represents a maze with r rows and c columns
+//The maze is generated using Prim's algorithm
+//Walls of the maze are 1's and paths are 0's 
 function generateMaze(r, c) {
 	//the maze represented by a 2d array with 1's representing the walls and 0's representing the floors
 	//create a grid full of walls
@@ -375,6 +420,7 @@ function generateMaze(r, c) {
 	return maze;
 }
 
+//Returns an empty 2d array with 'rows' rows and 'cols' columns
 function create2DArray(rows, cols) {
 	var array = new Array(rows);
 	for(var i = 0; i<rows; i++) {
@@ -383,7 +429,7 @@ function create2DArray(rows, cols) {
 	return array;
 }
 
-//remove an element from an unordered list
+//remove an element from an unordered array
 function removeWall(list, index) {
 	var v = list[list.length-1];
 	list[index] = v;
