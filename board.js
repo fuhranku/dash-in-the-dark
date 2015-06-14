@@ -11,7 +11,6 @@ var gctx = gameplay.getContext('2d');
 gameplay.width = 1275;
 gameplay.height = 640;
 
-
 //load all
 bluePlayer = new Image();
 bluePlayer.src = "visuals/Blue Player.png";
@@ -33,16 +32,26 @@ var ROWS = 15;
 var COLS = 15;
 
 window.onload = function() {
-	
-	blue = new Sprite(gctx, bluePlayer, 7, 7, 33, 36);
-	blue.render();
-	bluePlayer.addEventListener("load", gameLoop);
-	
 	maze1 = new Maze(ctx, generateMaze(ROWS, COLS), 5, 5);
 	maze2 = new Maze(ctx, generateMaze(ROWS, COLS), 10+floorTile.width*ROWS, 5);
+
+	//uses arrow keys
+	
+	red = new Character(gctx, redPlayer, 12+floorTile.width*ROWS, 7, 33, 36, maze2, 200, 38, 40, 37, 39);
+	if(red instanceof Character)
+		red.render();
+	redPlayer.addEventListener("load", gameLoop);
+	
+
+	//uses WASD
+	blue = new Character(gctx, bluePlayer, 7, 7, 33, 36, maze1, 200, 87, 83, 65, 68);
+	if(blue instanceof Sprite)
+		blue.render();
+	//bluePlayer.addEventListener("load", gameLoop);
 	
 	maze1.render();
 	maze2.render();
+	//maze2.addEventListener("load", gameLoop);
 }
 
 function Sprite(context, img, x, y, width, height) {
@@ -52,30 +61,48 @@ function Sprite(context, img, x, y, width, height) {
 	this.yPos = y;
 	this.width = width;
 	this.height= height;
-	this.direction = 0;
-	this.frameIndex = 1;
-	this.xSpeed = 0;
-	this.ySpeed = 0;
 }
 
 Sprite.prototype.render = function() {
 	this.context.drawImage(
 		this.image,
-		this.width * this.frameIndex,
-		this.height * this.direction,
-		this.width,
-		this.height,
 		this.xPos,
 		this.yPos, 
 		this.width,
 		this.height);
 }
 
-Sprite.prototype.move = function() {
-	this.xPos += this.xSpeed;
-	this.yPos += this.ySpeed;
-	var collide = wallCollision(this, maze1);
-	var bounds = borderCollision(this, maze1);
+function Character(context, img, x, y, width, height, mazeObj, speed, up, down, left, right) {
+	Sprite.call(this, context, img, x, y, width, height);
+
+	this.direction = 0;
+	this.frameIndex = 1;
+	this.frameCounter = 0;
+	this.frameCap = 5;
+	this.speed = speed;
+	this.xSpeed = 0;
+	this.ySpeed = 0;
+	this.maze = mazeObj;
+	this.up = up;
+	this.down = down;
+	this.left = left;
+	this.right = right;
+}
+
+function createObject(proto) {
+	function creator() { }
+	creator.prototype = proto;
+	return new creator();
+}
+
+Character.prototype = createObject(Sprite.prototype);
+Character.prototype.constructor = Character;
+
+Character.prototype.move = function(deltaTime) {
+	this.xPos += Math.floor(this.xSpeed*deltaTime);
+	this.yPos += Math.floor(this.ySpeed*deltaTime);
+	var collide = wallCollision(this, this.maze);
+	var bounds = borderCollision(this, this.maze);
 	if(collide != null) {
 		var extra = overlapAmount(this, collide, this.direction, 2);
 		//char facing down
@@ -111,62 +138,127 @@ Sprite.prototype.move = function() {
 	}
 
 	if(this.xSpeed + this.ySpeed != 0) {
-		this.frameIndex = (this.frameIndex+1)%3;
+		this.frameCounter += 1;
+		if(this.frameCounter === this.frameCap) {
+			this.frameIndex = (this.frameIndex+1)%3;
+			this.frameCounter = 0;
+		}
 	}
 }
 
+Character.prototype.render = function() {
+	this.context.drawImage(
+		this.image,
+		this.width * this.frameIndex,
+		this.height * this.direction,
+		this.width,
+		this.height,
+		this.xPos,
+		this.yPos, 
+		this.width,
+		this.height);
+}
+
+var lastTime = Date.now();
 function gameLoop() {
-	window.requestAnimationFrame(gameLoop);
+	var now = Date.now();
+	var dt = (now-lastTime)/1000.0;
 
-	update();
+	update(dt);
+
 	blue.render();
+	red.render();
+
+	lastTime = now;
+
+	window.requestAnimationFrame(gameLoop);
 }
 
-function update() {
+function update(deltaTime) {
 	gctx.clearRect(0, 0, gameplay.width, gameplay.height);
-	handleInput(blue, 3);
-	blue.move();
+	handleInput(red, blue);
+	red.move(deltaTime);
+
+	//handleInput(blue);
+	blue.move(deltaTime);
+	
 }
 
-
-function handleInput(player, speed) {
+//speed is measured in pixels per second
+function handleInput(player, player2) {
 	document.onkeydown = function(e) {
 		e = e || window.event;
 		//direction value - 0 is down, 1 is right, 2 is up, and 3 is left
 		//up arrow
-		if(e.keyCode === 38) {
+		if(e.keyCode === player.up) {
 			player.direction = 2;
-			player.ySpeed = -1*speed;
+			player.ySpeed = -1*player.speed;
 			player.xSpeed = 0;
 		}
+
 		//down arrow
-		else if(e.keyCode === 40) {
+		else if(e.keyCode === player.down) {
 			player.direction = 0;
-			player.ySpeed = speed;
+			player.ySpeed = player.speed;
 			player.xSpeed = 0;
 		}
 		//left arrow
-		else if(e.keyCode === 37) {
+		else if(e.keyCode === player.left) {
 			player.direction = 3;
-			player.xSpeed = -1*speed;
+			player.xSpeed = -1*player.speed;
 			player.ySpeed = 0;
 		}
+
 		//right arrow
-		else if(e.keyCode === 39) {
+		else if(e.keyCode === player.right) {
 			player.direction = 1;
-			player.xSpeed = speed;
+			player.xSpeed = player.speed;
 			player.ySpeed = 0;
+		}
+
+		if(e.keyCode === player2.up) {
+			player2.direction = 2;
+			player2.ySpeed = -1*player.speed;
+			player2.xSpeed = 0;
+		}
+
+		//down arrow
+		else if(e.keyCode === player2.down) {
+			player2.direction = 0;
+			player2.ySpeed = player2.speed;
+			player2.xSpeed = 0;
+		}
+		//left arrow
+		else if(e.keyCode === player2.left) {
+			player2.direction = 3;
+			player2.xSpeed = -1*player2.speed;
+			player2.ySpeed = 0;
+		}
+
+		//right arrow
+		else if(e.keyCode === player2.right) {
+			player2.direction = 1;
+			player2.xSpeed = player2.speed;
+			player2.ySpeed = 0;
 		}
 	}
 
 	document.onkeyup = function(e) {
-		if(e.keyCode === 38 || e.keyCode === 40) {
+		if(e.keyCode === player.up || e.keyCode === player.down) {
 			player.frameIndex = 1;
 			player.ySpeed = 0;
 		}
-		if(e.keyCode === 37 || e.keyCode === 39) {
+		if(e.keyCode === player.left || e.keyCode === player.right) {
 			player.frameIndex = 1;
 			player.xSpeed = 0;
+		}
+		if(e.keyCode === player2.up || e.keyCode === player2.down) {
+			player2.frameIndex = 1;
+			player2.ySpeed = 0;
+		}
+		if(e.keyCode === player2.left || e.keyCode === player2.right) {
+			player2.frameIndex = 1;
+			player2.xSpeed = 0;
 		}
 	}
 }
@@ -202,8 +294,8 @@ function borderCollision(player, mazeObj) {
 		return mazeObj.yPos - player.yPos;
 	}
 	//colliding with bottom border
-	else if(player.yPos + player.height > mazeObj.xPos + floorTile.height*ROWS) {
-		return (player.yPos + player.height) - (mazeObj.xPos + floorTile.height*ROWS);
+	else if(player.yPos + player.height > mazeObj.yPos + floorTile.height*ROWS) {
+		return (player.yPos + player.height) - (mazeObj.yPos + floorTile.height*ROWS);
 	}
 
 	else {
@@ -211,7 +303,9 @@ function borderCollision(player, mazeObj) {
 	}
 }
 
-//takes two sprites as parameters
+//takes two sprites as parameters, plus a deviation value
+//deviation value describes how much lenience the collision detection has in pixels
+//if the two sprites only collide by less than dev number of pixels, no collision is detected
 function overlap(sprite1, sprite2, dev) {
 	var verticalOverlap = false;
 	var horizontalOverlap = false;
