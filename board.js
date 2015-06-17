@@ -12,151 +12,71 @@ gameplay.width = 1275;
 gameplay.height = 640;
 
 //load all
-bluePlayer = new Image();
-bluePlayer.src = "visuals/Blue Player.png";
+finish = new Image();
+finish.src = "visuals/finish.png";
+
+blocked = new Image();
+blocked.src = "visuals/blocked.png";
+
+floorTile = new Image();
+floorTile.src = "visuals/floor-tile.png";
+
+wallTile = new Image();
+wallTile.src = "visuals/wall-tile.png";
 
 redPlayer = new Image();
 redPlayer.src = "visuals/Red Player.png";
 
-floorTile = new Image();
-floorTile.src = "visuals/floor-tile.png";
-floorTile.height = 42;
-floorTile.width = 42;
+bluePlayer = new Image();
+bluePlayer.src = "visuals/Blue Player.png";
 
-wallTile = new Image();
-wallTile.src = "visuals/wall-tile.png";
-wallTile.height = 42;
-wallTile.width = 42;
+blueFire = new Image();
+blueFire.src = "visuals/BlueFireSS.png";
+
+redFire = new Image();
+redFire.src = "visuals/RedFireSS.png";
 
 var ROWS = 15;
 var COLS = 15;
 
-window.onload = function() {
+window.onload = startGame;
+
+function startGame() {
 	maze1 = new Maze(ctx, generateMaze(ROWS, COLS), 5, 5);
 	maze2 = new Maze(ctx, generateMaze(ROWS, COLS), 10+floorTile.width*ROWS, 5);
 
-	//uses arrow keys
-	
-	red = new Character(gctx, redPlayer, 12+floorTile.width*ROWS, 7, 33, 36, maze2, 200, 38, 40, 37, 39);
-	if(red instanceof Character)
-		red.render();
-	redPlayer.addEventListener("load", gameLoop);
-	
+	//uses WASD and the space bar to shoot
+	blue = new Character(gctx, bluePlayer, 7, 7, 33, 36, maze1, 200, 87, 83, 65, 68, 32);
 
-	//uses WASD
-	blue = new Character(gctx, bluePlayer, 7, 7, 33, 36, maze1, 200, 87, 83, 65, 68);
-	if(blue instanceof Sprite)
-		blue.render();
-	//bluePlayer.addEventListener("load", gameLoop);
+	//uses arrow keys to move and 0 to shoot
+	red = new Character(gctx, redPlayer, 12+floorTile.width*ROWS, 7, 33, 36, maze2, 200, 38, 40, 37, 39, 96);
 	
+	redFlame = new Sprite(gctx, redFire, 18+floorTile.width*(COLS*2 -1), 13+floorTile.height*(ROWS-1), redFire.height, redFire.height);
+	blueFlame = new Sprite(gctx, blueFire, 13+floorTile.width*(COLS-1), 13+floorTile.height*(ROWS-1), blueFire.height, blueFire.height);
+	
+	gameElements = [red, blue, redFlame, blueFlame];
+
+	for(var i = 0; i<gameElements.length; i++) {
+		gameElements[i].render();
+	}
+	/*
+	blue.render();
+	red.render();	
+	redFlame.render();
+	blueFlame.render(); */
 	maze1.render();
 	maze2.render();
-	//maze2.addEventListener("load", gameLoop);
+	gameLoop(); 
+
+	//window.addEventListener("click", play);
 }
 
-function Sprite(context, img, x, y, width, height) {
-	this.context = context;
-	this.image = img;
-	this.xPos = x;
-	this.yPos = y;
-	this.width = width;
-	this.height= height;
-}
-
-Sprite.prototype.render = function() {
-	this.context.drawImage(
-		this.image,
-		this.xPos,
-		this.yPos, 
-		this.width,
-		this.height);
-}
-
-function Character(context, img, x, y, width, height, mazeObj, speed, up, down, left, right) {
-	Sprite.call(this, context, img, x, y, width, height);
-
-	this.direction = 0;
-	this.frameIndex = 1;
-	this.frameCounter = 0;
-	this.frameCap = 5;
-	this.speed = speed;
-	this.xSpeed = 0;
-	this.ySpeed = 0;
-	this.maze = mazeObj;
-	this.up = up;
-	this.down = down;
-	this.left = left;
-	this.right = right;
-}
-
-function createObject(proto) {
-	function creator() { }
-	creator.prototype = proto;
-	return new creator();
-}
-
-Character.prototype = createObject(Sprite.prototype);
-Character.prototype.constructor = Character;
-
-Character.prototype.move = function(deltaTime) {
-	this.xPos += Math.floor(this.xSpeed*deltaTime);
-	this.yPos += Math.floor(this.ySpeed*deltaTime);
-	var collide = wallCollision(this, this.maze);
-	var bounds = borderCollision(this, this.maze);
-	if(collide != null) {
-		var extra = overlapAmount(this, collide, this.direction, 2);
-		//char facing down
-		if(this.direction === 0) {
-			this.yPos -= extra;
-		}
-		//char facing right
-		else if(this.direction === 1) {
-			this.xPos -= extra;
-		}
-		//char facing up
-		else if(this.direction === 2) {
-			this.yPos += extra;
-		}
-		//char facing left
-		else {
-			this.xPos += extra;
-		}
-	}
-	if(bounds != 0) {
-		if(this.direction ==- 0) {
-			this.yPos -= bounds;
-		}
-		else if(this.direction === 1) {
-			this.xPos -= bounds;
-		}
-		else if(this.direction === 2) {
-			this.yPos += bounds;
-		}
-		else {
-			this.xPos += bounds;
-		}
-	}
-
-	if(this.xSpeed + this.ySpeed != 0) {
-		this.frameCounter += 1;
-		if(this.frameCounter === this.frameCap) {
-			this.frameIndex = (this.frameIndex+1)%3;
-			this.frameCounter = 0;
-		}
-	}
-}
-
-Character.prototype.render = function() {
-	this.context.drawImage(
-		this.image,
-		this.width * this.frameIndex,
-		this.height * this.direction,
-		this.width,
-		this.height,
-		this.xPos,
-		this.yPos, 
-		this.width,
-		this.height);
+function play() {
+	blue.render();
+	red.render();	
+	maze1.render();
+	maze2.render();
+	gameLoop();
 }
 
 var lastTime = Date.now();
@@ -165,23 +85,100 @@ function gameLoop() {
 	var dt = (now-lastTime)/1000.0;
 
 	update(dt);
-
+	for(var i = 0; i<gameElements.length; i++) {
+		if(gameElements[i].isAlive) {
+			gameElements[i].render();
+		}
+	}
+	/*
 	blue.render();
 	red.render();
+	if(redFlame.isAlive)
+		redFlame.render();
+	if(blueFlame.isAlive)
+		blueFlame.render();
+	*/
+	for(var i = 0; i<maze1.fireballs.length; i++) {
+		maze1.fireballs[i].render();
+	}
+	
+	for(var i = 0; i<maze2.fireballs.length; i++) {
+		maze2.fireballs[i].render();
+	}
 
 	lastTime = now;
-
 	window.requestAnimationFrame(gameLoop);
 }
 
 function update(deltaTime) {
 	gctx.clearRect(0, 0, gameplay.width, gameplay.height);
-	handleInput(red, blue);
+	handleInput(blue, red);
 	red.move(deltaTime);
-
-	//handleInput(blue);
 	blue.move(deltaTime);
+	//check for players finishing the maze
+	if(maze1.portalOn || !blue.canShoot || !red.canShoot) {
+		if(reachFinish(blue, maze1)) {
+			blue.canShoot = true;
+			blueFlame.isAlive = false;
+			maze1.shutPortal();
+			maze2.shutPortal();
+			if(redFlame.isAlive) {
+				blue.maze = maze2;
+				blue.xPos = blue.maze.xPos + 7;
+				blue.yPos = blue.maze.yPos + 7;
+			}
+		}
+		
+		else if(reachFinish(red, maze2)) {
+			red.canShoot = true;
+			maze1.shutPortal();
+			maze2.shutPortal();
+			redFlame.isAlive = false;
+			if(blueFlame.isAlive) {
+				red.maze = maze1;
+				red.xPos = red.maze.xPos + 7;
+				red.yPos = red.maze.yPos + 7;
+			}
+		}
+	}
+
+	//make all fireballs move, and remove ones that hit a wall/border
+	for(var i = maze1.fireballs.length-1; i>=0 ; i--) {
+		maze1.fireballs[i].move(deltaTime);
+		if(!maze1.fireballs[i].isAlive) {
+			removeElement(maze1.fireballs, i);
+		}
+	}
 	
+	for(var i = maze2.fireballs.length-1; i>=0; i--) {
+		maze2.fireballs[i].move(deltaTime);
+		if(!maze2.fireballs[i].isAlive) {
+			removeElement(maze2.fireballs, i);
+		}
+	}
+	
+	if(redFlame.isAlive) {
+		redFlame.nextFrame(4);
+	}
+	if(blueFlame.isAlive) {
+		blueFlame.nextFrame(4);
+	}
+
+	if(!blue.canFire) {
+		blue.fireCounter += deltaTime;
+		if(blue.fireCounter >= blue.fireCooldown) {
+			blue.canFire = true;
+			blue.fireCounter = 0;
+		}
+	}
+
+	if(!red.canFire) {
+		red.fireCounter += deltaTime;
+		if(red.fireCounter >= red.fireCooldown) {
+			red.canFire = true;
+			red.fireCounter = 0;
+		}
+	}
 }
 
 //speed is measured in pixels per second
@@ -216,31 +213,48 @@ function handleInput(player, player2) {
 			player.ySpeed = 0;
 		}
 
+		//player 2 up arrow
 		if(e.keyCode === player2.up) {
 			player2.direction = 2;
 			player2.ySpeed = -1*player.speed;
 			player2.xSpeed = 0;
 		}
 
-		//down arrow
+		//player 2 down arrow
 		else if(e.keyCode === player2.down) {
 			player2.direction = 0;
 			player2.ySpeed = player2.speed;
 			player2.xSpeed = 0;
 		}
-		//left arrow
+		//player 2 left arrow
 		else if(e.keyCode === player2.left) {
 			player2.direction = 3;
 			player2.xSpeed = -1*player2.speed;
 			player2.ySpeed = 0;
 		}
 
-		//right arrow
+		//player 2 right arrow
 		else if(e.keyCode === player2.right) {
 			player2.direction = 1;
 			player2.xSpeed = player2.speed;
 			player2.ySpeed = 0;
 		}
+
+		if(player.canShoot && e.keyCode === player.shoot) {
+			if(player.canFire) {
+				player.maze.addFireball(player, blueFire);
+				player.canFire = false;
+			}
+		}
+	
+
+		if(player2.canShoot && e.keyCode === player2.shoot) {
+			if(player2.canFire) {
+				player2.maze.addFireball(player2, redFire);
+				player2.canFire = false;
+			}
+		}
+		
 	}
 
 	document.onkeyup = function(e) {
@@ -278,6 +292,10 @@ function wallCollision(player, mazeObj) {
 		}
 	}
 	return null;
+}
+
+function reachFinish(player, mazeObj) {
+	return overlap(player, mazeObj.portalSprite, 0);
 }
 
 function borderCollision(player, mazeObj) {
@@ -357,6 +375,171 @@ Vector.prototype.getY = function() {
 	return this.y_comp;
 }
 
+//*****************************************************************
+// ALL SPRITE OBJECTS AND CHILDREN
+//
+// Includes Sprite, Character, and Fireball and their methods
+//*****************************************************************
+function Sprite(context, img, x, y, width, height) {
+	this.isAlive = true;
+	this.context = context;
+	this.image = img;
+	this.xPos = x;
+	this.yPos = y;
+	this.width = width;
+	this.height= height;
+	this.frameIndex = 0;
+	this.frameCounter = 0;
+	this.frameCap = 5;
+}
+
+Sprite.prototype.render = function() {
+	this.context.drawImage(
+		this.image,
+		this.width*this.frameIndex,
+		0,
+		this.width,
+		this.height,
+		this.xPos,
+		this.yPos,
+		this.width,
+		this.height);
+}
+
+Sprite.prototype.nextFrame = function(numberOfFrames) {
+	this.frameCounter += 1;
+		if(this.frameCounter === this.frameCap) {
+			this.frameIndex = (this.frameIndex+1)%numberOfFrames;
+			this.frameCounter = 0;
+		}
+}
+
+function Character(context, img, x, y, width, height, mazeObj, speed, up, down, left, right, shoot) {
+	Sprite.call(this, context, img, x, y, width, height);
+	this.canShoot = false;
+	this.canFire = true;
+	this.fireCounter = 0;
+	this.fireCooldown = 2;
+	this.direction = 0;
+	this.frameIndex = 1;
+	this.speed = speed;
+	this.xSpeed = 0;
+	this.ySpeed = 0;
+	this.maze = mazeObj;
+	this.up = up;
+	this.down = down;
+	this.left = left;
+	this.right = right;
+	this.shoot = shoot
+}
+
+function createObject(proto) {
+	function creator() { }
+	creator.prototype = proto;
+	return new creator();
+}
+
+Character.prototype = createObject(Sprite.prototype);
+Character.prototype.constructor = Character;
+
+Character.prototype.move = function(deltaTime) {
+	this.xPos += Math.floor(this.xSpeed*deltaTime);
+	this.yPos += Math.floor(this.ySpeed*deltaTime);
+
+	//collide is the tile sprite that the character collided with
+	var collide = wallCollision(this, this.maze);
+
+	//bounds is the amount the character overlapped with the border
+	var bounds = borderCollision(this, this.maze);
+	if(collide != null) {
+		var extra = overlapAmount(this, collide, this.direction, 2);
+		//char facing down
+		if(this.direction === 0) {
+			this.yPos -= extra;
+		}
+		//char facing right
+		else if(this.direction === 1) {
+			this.xPos -= extra;
+		}
+		//char facing up
+		else if(this.direction === 2) {
+			this.yPos += extra;
+		}
+		//char facing left
+		else {
+			this.xPos += extra;
+		}
+	}
+
+	if(bounds != 0) {
+		if(this.direction ==- 0) {
+			this.yPos -= bounds;
+		}
+		else if(this.direction === 1) {
+			this.xPos -= bounds;
+		}
+		else if(this.direction === 2) {
+			this.yPos += bounds;
+		}
+		else {
+			this.xPos += bounds;
+		}
+	}
+
+	if(this.xSpeed + this.ySpeed != 0) {
+		this.nextFrame(3);
+	}
+}
+
+Character.prototype.render = function() {
+	this.context.drawImage(
+		this.image,
+		this.width * this.frameIndex,
+		this.height * this.direction,
+		this.width,
+		this.height,
+		this.xPos,
+		this.yPos, 
+		this.width,
+		this.height);
+}
+
+function Fireball(context, img, height, origin, speed) {
+	Sprite.call(this, context, img, origin.xPos + 3, origin.yPos + 5, height, height);
+	this.origin = origin;
+	this.maze = origin.maze;
+	this.speed = speed;
+	this.direction = origin.direction;
+	this.frameCap = 4;
+}
+
+Fireball.prototype = createObject(Sprite.prototype);
+Fireball.prototype.constructor = Fireball;
+
+Fireball.prototype.move = function(deltaTime) {
+	//char facing down
+	if(this.direction === 0) {
+		this.yPos += Math.floor(this.speed*deltaTime);
+	}
+	//char facing right
+	else if(this.direction === 1) {
+		this.xPos += Math.floor(this.speed*deltaTime);
+	}
+	//char facing up
+	else if(this.direction === 2) {
+		this.yPos -= Math.floor(this.speed*deltaTime);
+	}
+	//char facing left
+	else {
+		this.xPos -= Math.floor(this.speed*deltaTime);
+	}
+	
+	if(wallCollision(this, this.maze) != null || borderCollision(this, this.maze) != 0) {
+		this.isAlive = false;
+	}
+
+	this.nextFrame(4);
+}
 
 //*************************************************************
 // ALL THINGS RELATED TO GENERATING MAZES
@@ -371,6 +554,10 @@ function Maze(context, array, startX, startY) {
 	this.maze = array;
 	this.xPos = startX;
 	this.yPos = startY;
+	this.portalOn = true;
+	this.fireballs = new Array();
+	this.portalSprite = new Sprite(this.context, finish, this.xPos+finish.width*(COLS-1),
+	 this.yPos + finish.height*(ROWS-1), finish.width, finish.height);
 }
 
 //Method to draw the entire maze
@@ -383,6 +570,18 @@ Maze.prototype.render = function() {
 				this.context.drawImage(wallTile, this.xPos+wallTile.width*i, this.yPos+wallTile.height*j);
 		}
 	}
+	this.context.drawImage(finish, this.xPos+finish.width*(COLS-1), this.yPos+finish.height*(ROWS-1));
+}
+
+Maze.prototype.shutPortal = function() {
+	this.portalOn = false;
+	this.context.drawImage(blocked, this.portalSprite.xPos, this.portalSprite.yPos);
+}
+
+Maze.prototype.addFireball = function(player, img) {
+	var temp = new Fireball(gctx, img, redFire.height, player, 300);
+	this.fireballs.push(temp);
+	temp.render();
 }
 
 //return the maze array, but with Sprite objects representing each tile
@@ -509,7 +708,7 @@ function generateMaze(r, c) {
 			}
 		}
 		//remove the wall from the list
-		removeWall(walls, random);
+		removeElement(walls, random);
 	}
 	return maze;
 }
@@ -524,7 +723,7 @@ function create2DArray(rows, cols) {
 }
 
 //remove an element from an unordered array
-function removeWall(list, index) {
+function removeElement(list, index) {
 	var v = list[list.length-1];
 	list[index] = v;
 	list.pop();
