@@ -1,3 +1,4 @@
+//Author: Frank Chan
 //Making this game was mostly for me to learn javascript and become comfortable with the syntax
 //If it helps you learn, feel free to use anything from here
 
@@ -10,6 +11,11 @@ var gameplay = document.getElementById('gameplay');
 var gctx = gameplay.getContext('2d');
 gameplay.width = 1275;
 gameplay.height = 640;
+
+var spotlight = document.getElementById('spotlight');
+var sctx = spotlight.getContext('2d');
+sctx.width = 1275;
+sctx.height = 640;
 
 //load all
 finish = new Image();
@@ -36,12 +42,79 @@ blueFire.src = "visuals/BlueFireSS.png";
 redFire = new Image();
 redFire.src = "visuals/RedFireSS.png";
 
+title = new Image();
+title.src = "visuals/title.png";
+
+controls = new Image();
+controls.src = "visuals/controls.png";
+
+instructions = new Image();
+instructions.src = "visuals/instructions.png";
+
+instructButton = new Image();
+instructButton.src = "visuals/instructionButton.png";
+
+startButton = new Image();
+startButton.src = "visuals/startButton.png";
+
+rightArrow = new Image();
+rightArrow.src = "visuals/rightArrow.png";
+
+leftArrow = new Image();
+leftArrow.src = "visuals/leftArrow.png";
+
 var ROWS = 15;
 var COLS = 15;
 
-window.onload = startGame;
+window.onload = startScreen;
+
+function startScreen() {
+	canvas.style.backgroundColor = "transparent";
+	ctx.drawImage(title, canvas.width/2 - title.width/2, 
+		canvas.height/3 - title.height/2, title.width, title.height);
+	ctx.drawImage(startButton, canvas.width/3 - startButton.width/2, 
+		3*canvas.height/4 - startButton.height/2, startButton.width, startButton.height);
+	ctx.drawImage(instructButton, 2* canvas.width/3 - instructButton.width/2, 
+		3*canvas.height/4 - instructButton.height/2, instructButton.width, instructButton.height);
+	ctx.drawImage(leftArrow, 0, 0, leftArrow.width, leftArrow.height);
+	spotlight.addEventListener("mousedown", startScreenClicks);
+}
+
+function startScreenClicks(event) {
+	if(ButtonHover(event, canvas.width/3 - startButton.width/2, 
+		3*canvas.height/4 - startButton.height/2, startButton.width, startButton.height)) {
+		startGame();
+	}
+	else if(ButtonHover(event, 2* canvas.width/3 - instructButton.width/2, 
+		3*canvas.height/4 - instructButton.height/2, instructButton.width, instructButton.height)) {
+		instructionScreen();
+	}
+	else if(ButtonHover(event, 0, 0, leftArrow.width, leftArrow.height)) {
+		window.location.href = "http://fuhranku.github.io";
+	}
+}
+
+function instructionScreen() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.drawImage(instructions, 0, 0, instructions.width, instructions.height);
+	ctx.drawImage(rightArrow, instructions.width - rightArrow.width, 0, rightArrow.width, rightArrow.height);
+	spotlight.removeEventListener("mousedown", startScreenClicks);
+	//window.addEventListener("click", controlScreen);
+}
+
+function controlScreen() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.drawImage(controls, 0, 0, controls.width, controls.height);
+	window.removeEventListener("click", controlScreen);
+	window.addEventListener("click", startGame);
+}
 
 function startGame() {
+	spotlight.removeEventListener("mousedown", startScreenClicks);
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	canvas.style.backgroundColor = "black";
+	director = new Director();
+
 	maze1 = new Maze(ctx, generateMaze(ROWS, COLS), 5, 5);
 	maze2 = new Maze(ctx, generateMaze(ROWS, COLS), 10+floorTile.width*ROWS, 5);
 
@@ -59,24 +132,71 @@ function startGame() {
 	for(var i = 0; i<gameElements.length; i++) {
 		gameElements[i].render();
 	}
-	/*
-	blue.render();
-	red.render();	
-	redFlame.render();
-	blueFlame.render(); */
+	
 	maze1.render();
 	maze2.render();
-	gameLoop(); 
 
-	//window.addEventListener("click", play);
+	director.follow();
+
+	gameLoop();
 }
 
-function play() {
-	blue.render();
-	red.render();	
-	maze1.render();
-	maze2.render();
-	gameLoop();
+function ButtonHover(event, x, y, width, height) {
+	var mouseX = new Number();
+    var mouseY = new Number();
+    var canvas = document.getElementById("canvas");
+
+    if (event.x != undefined && event.y != undefined)
+    {
+    	mouseX = event.x;
+    	mouseY = event.y;
+    }
+    else // Firefox method to get the position
+    {
+    mouseX = event.clientX + document.body.scrollLeft +
+              document.documentElement.scrollLeft;
+    mouseY = event.clientY + document.body.scrollTop +
+              document.documentElement.scrollTop;
+    }
+
+    mouseX -= canvas.offsetLeft;
+    mouseY -= canvas.offsetTop;
+	if((mouseX > x && mouseX < x + width) && (mouseY > y && mouseY< y + height)) {
+		return true;
+	}
+	return false;
+}
+
+function Director() {
+	this.lights = false;
+}
+
+Director.prototype.follow = function() {
+	var blueX = blue.xPos + (blue.width/2);
+	var blueY = blue.yPos + (blue.height/2);
+	var redX = red.xPos + (red.width/2);
+	var redY = red.yPos + (red.height/2);
+	var radius = 60;
+
+	sctx.clearRect(0, 0, gameplay.width, gameplay.height);
+	sctx.fillStyle = 'black';
+	sctx.fillRect(0, 0, gameplay.width, gameplay.height);
+	sctx.save();
+	sctx.beginPath();
+	sctx.arc(blueX, blueY, radius, 0, 2 * Math.PI);
+	sctx.clip();
+	sctx.clearRect(0, 0, gameplay.width, gameplay.height);
+	sctx.restore();
+	sctx.save();
+	sctx.beginPath();
+	sctx.arc(redX, redY, radius, 0, 2 * Math.PI);
+	sctx.clip();
+	sctx.clearRect(0, 0, gameplay.width, gameplay.height);
+	sctx.restore();
+}
+
+Director.prototype.lightsOn = function() {
+	sctx.clearRect(0, 0, gameplay.width, gameplay.height);
 }
 
 var lastTime = Date.now();
@@ -90,14 +210,7 @@ function gameLoop() {
 			gameElements[i].render();
 		}
 	}
-	/*
-	blue.render();
-	red.render();
-	if(redFlame.isAlive)
-		redFlame.render();
-	if(blueFlame.isAlive)
-		blueFlame.render();
-	*/
+
 	for(var i = 0; i<maze1.fireballs.length; i++) {
 		maze1.fireballs[i].render();
 	}
@@ -113,8 +226,16 @@ function gameLoop() {
 function update(deltaTime) {
 	gctx.clearRect(0, 0, gameplay.width, gameplay.height);
 	handleInput(blue, red);
-	red.move(deltaTime);
-	blue.move(deltaTime);
+	
+	if(red.isAlive && blue.isAlive) {
+		red.move(deltaTime);
+		blue.move(deltaTime);
+	}
+
+	if(!director.lights) {
+		director.follow();
+	}
+
 	//check for players finishing the maze
 	if(maze1.portalOn || !blue.canShoot || !red.canShoot) {
 		if(reachFinish(blue, maze1)) {
@@ -122,6 +243,8 @@ function update(deltaTime) {
 			blueFlame.isAlive = false;
 			maze1.shutPortal();
 			maze2.shutPortal();
+			director.lights = true;
+			director.lightsOn();
 			if(redFlame.isAlive) {
 				blue.maze = maze2;
 				blue.xPos = blue.maze.xPos + 7;
@@ -133,6 +256,8 @@ function update(deltaTime) {
 			red.canShoot = true;
 			maze1.shutPortal();
 			maze2.shutPortal();
+			director.lights = true;
+			director.lightsOn();
 			redFlame.isAlive = false;
 			if(blueFlame.isAlive) {
 				red.maze = maze1;
@@ -538,6 +663,16 @@ Fireball.prototype.move = function(deltaTime) {
 		this.isAlive = false;
 	}
 
+	if(overlap(this, blue, 0) && this.origin != blue) {
+		this.isAlive = false;
+		blue.isAlive = false;
+	}
+
+	if(overlap(this, red, 0) && this.origin != red) {
+		this.isAlive = false;
+		red.isAlive = false;
+	}
+
 	this.nextFrame(4);
 }
 
@@ -554,6 +689,8 @@ function Maze(context, array, startX, startY) {
 	this.maze = array;
 	this.xPos = startX;
 	this.yPos = startY;
+	this.width = COLS*floorTile.width;
+	this.height = ROWS*floorTile.height;
 	this.portalOn = true;
 	this.fireballs = new Array();
 	this.portalSprite = new Sprite(this.context, finish, this.xPos+finish.width*(COLS-1),
