@@ -70,6 +70,7 @@ window.onload = startScreen;
 
 function startScreen() {
 	canvas.style.backgroundColor = "transparent";
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.drawImage(title, canvas.width/2 - title.width/2, 
 		canvas.height/3 - title.height/2, title.width, title.height);
 	ctx.drawImage(startButton, canvas.width/3 - startButton.width/2, 
@@ -95,18 +96,36 @@ function startScreenClicks(event) {
 }
 
 function instructionScreen() {
+	spotlight.removeEventListener("mousedown", startScreenClicks);
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.drawImage(instructions, 0, 0, instructions.width, instructions.height);
 	ctx.drawImage(rightArrow, instructions.width - rightArrow.width, 0, rightArrow.width, rightArrow.height);
-	spotlight.removeEventListener("mousedown", startScreenClicks);
-	//window.addEventListener("click", controlScreen);
+	spotlight.addEventListener("mousedown", instructScreenClicks);
+}
+
+function instructScreenClicks(event) {
+	if(ButtonHover(event, instructions.width - rightArrow.width, 0, rightArrow.width, rightArrow.height)) {
+		controlScreen();
+	}
 }
 
 function controlScreen() {
+	spotlight.removeEventListener("mousedown", instructScreenClicks);
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.drawImage(controls, 0, 0, controls.width, controls.height);
-	window.removeEventListener("click", controlScreen);
-	window.addEventListener("click", startGame);
+	ctx.drawImage(leftArrow, 0, 0, leftArrow.width, leftArrow.height);
+	ctx.drawImage(rightArrow, instructions.width - rightArrow.width, 0, rightArrow.width, rightArrow.height);
+	spotlight.addEventListener("mousedown", controlScreenClicks);
+}
+
+function controlScreenClicks(event) {
+	if(ButtonHover(event, instructions.width - rightArrow.width, 0, rightArrow.width, rightArrow.height)) {
+		startScreen();
+		spotlight.removeEventListener("mousedown", controlScreenClicks);
+	}
+	else if(ButtonHover(event, 0, 0, leftArrow.width, leftArrow.height)) {
+		instructionScreen();
+	}
 }
 
 function startGame() {
