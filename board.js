@@ -435,7 +435,7 @@ function handleInput(player, player2) {
 		}
 	
 
-		if(player2.canShoot && (e.keyCode === player2.shoot) || (e.keyCode === player2.shoot2)) {
+		if(player2.canShoot && ((e.keyCode === player2.shoot) || (e.keyCode === player2.shoot2))) {
 			if(player2.canFire) {
 				player2.maze.addFireball(player2, redFire);
 				player2.canFire = false;
