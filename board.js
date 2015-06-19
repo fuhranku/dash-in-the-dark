@@ -147,10 +147,10 @@ function startGame() {
 	maze2 = new Maze(ctx, generateMaze(ROWS, COLS), 10+floorTile.width*ROWS, 5);
 
 	//uses WASD and the space bar to shoot
-	blue = new Character(gctx, bluePlayer, 7, 7, bluePlayer.width/3, bluePlayer.height/4, maze1, 200, 87, 83, 65, 68, 32);
+	blue = new Character(gctx, bluePlayer, 7, 7, bluePlayer.width/3, bluePlayer.height/4, maze1, 200, 87, 83, 65, 68, 32, 32);
 
 	//uses arrow keys to move and 0 to shoot
-	red = new Character(gctx, redPlayer, 12+floorTile.width*ROWS, 7, redPlayer.width/3, redPlayer.height/4, maze2, 200, 38, 40, 37, 39, 96);
+	red = new Character(gctx, redPlayer, 12+floorTile.width*ROWS, 7, redPlayer.width/3, redPlayer.height/4, maze2, 200, 38, 40, 37, 39, 96, 48);
 	
 	redFlame = new Sprite(gctx, redFire, 18+floorTile.width*(COLS*2 -1), 13+floorTile.height*(ROWS-1), redFire.height, redFire.height);
 	blueFlame = new Sprite(gctx, blueFire, 13+floorTile.width*(COLS-1), 13+floorTile.height*(ROWS-1), blueFire.height, blueFire.height);
@@ -177,7 +177,7 @@ function endScreen() {
 		ctx.drawImage(redPlayer, redPlayer.width/3, 0, redPlayer.width/3, redPlayer.height/4,
 			canvas.width/2 - redPlayer.width/2, redPlayer.width, redPlayer.width, redPlayer.height);
 	}
-	else {
+	else if(blue.isAlive) {
 		ctx.drawImage(bluePlayer, bluePlayer.width/3, 0, bluePlayer.width/3, bluePlayer.height/4,
 			canvas.width/2 - bluePlayer.width/2, bluePlayer.width, bluePlayer.width, bluePlayer.height);	
 	}
@@ -435,7 +435,7 @@ function handleInput(player, player2) {
 		}
 	
 
-		if(player2.canShoot && e.keyCode === player2.shoot) {
+		if(player2.canShoot && ((e.keyCode === player2.shoot) || (e.keyCode === player2.shoot2))) {
 			if(player2.canFire) {
 				player2.maze.addFireball(player2, redFire);
 				player2.canFire = false;
@@ -601,7 +601,7 @@ Sprite.prototype.nextFrame = function(numberOfFrames) {
 		}
 }
 
-function Character(context, img, x, y, width, height, mazeObj, speed, up, down, left, right, shoot) {
+function Character(context, img, x, y, width, height, mazeObj, speed, up, down, left, right, shoot, shoot2) {
 	Sprite.call(this, context, img, x, y, width, height);
 	this.canShoot = false;
 	this.canFire = true;
@@ -617,7 +617,8 @@ function Character(context, img, x, y, width, height, mazeObj, speed, up, down, 
 	this.down = down;
 	this.left = left;
 	this.right = right;
-	this.shoot = shoot
+	this.shoot = shoot;
+	this.shoot2 = shoot2;
 }
 
 function createObject(proto) {
