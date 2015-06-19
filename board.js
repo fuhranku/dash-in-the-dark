@@ -177,7 +177,7 @@ function endScreen() {
 		ctx.drawImage(redPlayer, redPlayer.width/3, 0, redPlayer.width/3, redPlayer.height/4,
 			canvas.width/2 - redPlayer.width/2, redPlayer.width, redPlayer.width, redPlayer.height);
 	}
-	else {
+	else if(blue.isAlive) {
 		ctx.drawImage(bluePlayer, bluePlayer.width/3, 0, bluePlayer.width/3, bluePlayer.height/4,
 			canvas.width/2 - bluePlayer.width/2, bluePlayer.width, bluePlayer.width, bluePlayer.height);	
 	}
