@@ -63,6 +63,15 @@ rightArrow.src = "visuals/rightArrow.png";
 leftArrow = new Image();
 leftArrow.src = "visuals/leftArrow.png";
 
+playAgain = new Image();
+playAgain.src = "visuals/playAgain.png";
+
+playerWins = new Image();
+playerWins.src = "visuals/playerWins.png";
+
+backButton = new Image();
+backButton.src = "visuals/backButton.png";
+
 var ROWS = 15;
 var COLS = 15;
 
@@ -138,10 +147,10 @@ function startGame() {
 	maze2 = new Maze(ctx, generateMaze(ROWS, COLS), 10+floorTile.width*ROWS, 5);
 
 	//uses WASD and the space bar to shoot
-	blue = new Character(gctx, bluePlayer, 7, 7, 33, 36, maze1, 200, 87, 83, 65, 68, 32);
+	blue = new Character(gctx, bluePlayer, 7, 7, bluePlayer.width/3, bluePlayer.height/4, maze1, 200, 87, 83, 65, 68, 32);
 
 	//uses arrow keys to move and 0 to shoot
-	red = new Character(gctx, redPlayer, 12+floorTile.width*ROWS, 7, 33, 36, maze2, 200, 38, 40, 37, 39, 96);
+	red = new Character(gctx, redPlayer, 12+floorTile.width*ROWS, 7, redPlayer.width/3, redPlayer.height/4, maze2, 200, 38, 40, 37, 39, 96);
 	
 	redFlame = new Sprite(gctx, redFire, 18+floorTile.width*(COLS*2 -1), 13+floorTile.height*(ROWS-1), redFire.height, redFire.height);
 	blueFlame = new Sprite(gctx, blueFire, 13+floorTile.width*(COLS-1), 13+floorTile.height*(ROWS-1), blueFire.height, blueFire.height);
@@ -158,6 +167,35 @@ function startGame() {
 	director.follow();
 
 	gameLoop();
+}
+
+function endScreen() {
+	canvas.style.backgroundColor = "transparent";
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	gctx.clearRect(0, 0, gameplay.width, gameplay.height);
+	if(red.isAlive) {
+		ctx.drawImage(redPlayer, redPlayer.width/3, 0, redPlayer.width/3, redPlayer.height/4,
+			canvas.width/2 - redPlayer.width/2, redPlayer.width, redPlayer.width, redPlayer.height);
+	}
+	else {
+		ctx.drawImage(bluePlayer, bluePlayer.width/3, 0, bluePlayer.width/3, bluePlayer.height/4,
+			canvas.width/2 - bluePlayer.width/2, bluePlayer.width, bluePlayer.width, bluePlayer.height);	
+	}
+	ctx.drawImage(playerWins, canvas.width/2 - playerWins.width/2, 2*canvas.height/5, playerWins.width, playerWins.height);
+	ctx.drawImage(playAgain, canvas.width/2 - playAgain.width/2, 3*canvas.height/5, playAgain.width, playAgain.height);
+	ctx.drawImage(backButton, canvas.width/2 - playAgain.width/2, 4*canvas.height/5, backButton.width, backButton.height);
+	spotlight.addEventListener("mousedown", endScreenClicks);
+}
+
+function endScreenClicks(event) {
+	if(ButtonHover(event, canvas.width/2 - playAgain.width/2, 3*canvas.height/5, playAgain.width, playAgain.height)) {
+		startGame();
+		spotlight.removeEventListener("mousedown", endScreenClicks);
+	}
+	else if(ButtonHover(event, canvas.width/2 - playAgain.width/2, 4*canvas.height/5, backButton.width, backButton.height)) {
+		startScreen();
+		spotlight.removeEventListener("mousedown", endScreenClicks);
+	}
 }
 
 function ButtonHover(event, x, y, width, height) {
@@ -239,7 +277,12 @@ function gameLoop() {
 	}
 
 	lastTime = now;
-	window.requestAnimationFrame(gameLoop);
+	if(red.isAlive && blue.isAlive) {
+		window.requestAnimationFrame(gameLoop);
+	}
+	else {
+		endScreen();
+	}
 }
 
 function update(deltaTime) {
