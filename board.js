@@ -473,7 +473,7 @@ function wallCollision(player, mazeObj) {
 	for(var i = 0; i< mazeObj.maze.length; i++) {
 		for(var j = 0; j<mazeObj.maze.length; j++) {
 			//if the tile we are currently looking at is a wall
-			if(mazeObj.maze[i][j] === 1 && overlap(player, tileList[i][j], 2)) {
+			if(mazeObj.maze[i][j] === 1 && overlap(player, tileList[i][j], 4)) {
 				return tileList[i][j];
 			}
 		}
@@ -526,7 +526,9 @@ function overlap(sprite1, sprite2, dev) {
 	//if intersects & sprite2 above sprite1
 	else if(sprite1.yPos - sprite2.yPos > dev && (sprite2.yPos + sprite2.height) - sprite1.yPos > dev)
 		verticalOverlap = true;
-	
+	//if sprite1 vertically encompasses sprite2
+	else if(sprite1.yPos <= (sprite2.yPos + dev) && (sprite1.yPos + sprite1.height >= (sprite2.yPos + sprite2.height - dev)))
+		verticalOverlap = true;
 	return (horizontalOverlap && verticalOverlap);
 }
 
@@ -640,7 +642,7 @@ Character.prototype.move = function(deltaTime) {
 	//bounds is the amount the character overlapped with the border
 	var bounds = borderCollision(this, this.maze);
 	if(collide != null) {
-		var extra = overlapAmount(this, collide, this.direction, 2);
+		var extra = overlapAmount(this, collide, this.direction, 4);
 		//char facing down
 		if(this.direction === 0) {
 			this.yPos -= extra;
