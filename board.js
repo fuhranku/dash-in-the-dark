@@ -1,23 +1,37 @@
-//Author: Frank Chan
-//Making this game was mostly for me to learn javascript and become comfortable with the syntax
-//If it helps you learn, feel free to use anything from here
+/*
+* board.js
+* 
+* Author: Frank Chan
+* Source: https://github.com/fuhranku/dash-in-the-dark
+*
+* Making this game was mostly for me to learn javascript and become comfortable with the syntax
+* If it helps you learn, feel free to use anything from here
+*/
 
+//set up all three canvases to be the same size
+
+//the bottom canvas used to draw the maze and the introductory screens on
+//does not need to be updated during gameplay
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 canvas.width=1275;
 canvas.height=640; 
 
+//the middle canvas used to keep track of players and their projectiles
+//constantly updates for player and projectile movement
 var gameplay = document.getElementById('gameplay');
 var gctx = gameplay.getContext('2d');
 gameplay.width = 1275;
 gameplay.height = 640;
 
+//the top canvas used to keep track of the spotlights illuminating the players
+//updates until one player finishes the maze
 var spotlight = document.getElementById('spotlight');
 var sctx = spotlight.getContext('2d');
 sctx.width = 1275;
 sctx.height = 640;
 
-//load all
+//load all textures before the game starts
 finish = new Image();
 finish.src = "visuals/finish.png";
 
@@ -75,8 +89,10 @@ backButton.src = "visuals/backButton.png";
 var ROWS = 15;
 var COLS = 15;
 
+//when all resources are loaded, go to the start screen
 window.onload = startScreen;
 
+//sets up the title and buttons for the introduction screen
 function startScreen() {
 	canvas.style.backgroundColor = "transparent";
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -90,6 +106,7 @@ function startScreen() {
 	spotlight.addEventListener("mousedown", startScreenClicks);
 }
 
+//
 function startScreenClicks(event) {
 	if(ButtonHover(event, canvas.width/3 - startButton.width/2, 
 		3*canvas.height/4 - startButton.height/2, startButton.width, startButton.height)) {
@@ -98,6 +115,7 @@ function startScreenClicks(event) {
 	else if(ButtonHover(event, 2* canvas.width/3 - instructButton.width/2, 
 		3*canvas.height/4 - instructButton.height/2, instructButton.width, instructButton.height)) {
 		instructionScreen();
+		spotlight.removeEventListener("mousedown", startScreenClicks);
 	}
 	else if(ButtonHover(event, 0, 0, leftArrow.width, leftArrow.height)) {
 		window.location.href = "http://fuhranku.github.io";
@@ -105,7 +123,7 @@ function startScreenClicks(event) {
 }
 
 function instructionScreen() {
-	spotlight.removeEventListener("mousedown", startScreenClicks);
+	//spotlight.removeEventListener("mousedown", startScreenClicks);
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.drawImage(instructions, 0, 0, instructions.width, instructions.height);
 	ctx.drawImage(rightArrow, instructions.width - rightArrow.width, 0, rightArrow.width, rightArrow.height);
@@ -199,8 +217,8 @@ function endScreenClicks(event) {
 }
 
 function ButtonHover(event, x, y, width, height) {
-	var mouseX = new Number();
-    var mouseY = new Number();
+	var mouseX;
+    var mouseY;
     var canvas = document.getElementById("canvas");
 
     if (event.x != undefined && event.y != undefined)
@@ -208,7 +226,7 @@ function ButtonHover(event, x, y, width, height) {
     	mouseX = event.x;
     	mouseY = event.y;
     }
-    else // Firefox method to get the position
+    else // if the browser is Firefox
     {
     mouseX = event.clientX + document.body.scrollLeft +
               document.documentElement.scrollLeft;
