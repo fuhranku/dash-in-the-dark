@@ -1,27 +1,15 @@
-<<<<<<< HEAD
-/*
-=======
 /**
->>>>>>> master
 * board.js
 * 
 * Author: Frank Chan
 * Source: https://github.com/fuhranku/dash-in-the-dark
 *
-<<<<<<< HEAD
-* Making this game was mostly for me to learn javascript and become comfortable with the syntax
-=======
 * Making this game was mostly for me to learn javascript and become comfortable
 * with the syntax
->>>>>>> master
 * If it helps you learn, feel free to use anything from here
 */
 
 //set up all three canvases to be the same size
-<<<<<<< HEAD
-
-=======
->>>>>>> master
 //the bottom canvas used to draw the maze and the introductory screens on
 //does not need to be updated during gameplay
 var canvas = document.getElementById('canvas');
@@ -104,13 +92,9 @@ var COLS = 15;
 //when all resources are loaded, go to the start screen
 window.onload = startScreen;
 
-<<<<<<< HEAD
-//sets up the title and buttons for the introduction screen
-=======
 /**
 * Sets up the title and buttons for the introduction screen
 */
->>>>>>> master
 function startScreen() {
 	canvas.style.backgroundColor = "transparent";
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -126,13 +110,9 @@ function startScreen() {
 	spotlight.addEventListener("mousedown", startScreenClicks);
 }
 
-<<<<<<< HEAD
-//
-=======
 /**
 * Navigates to proper page from the start screen if the buttons are clicked
 */
->>>>>>> master
 function startScreenClicks(event) {
 	if(ButtonHover(event, canvas.width/3 - startButton.width/2, 
 		3*canvas.height/4 - startButton.height/2, startButton.width, 
